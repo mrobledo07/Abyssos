@@ -70,6 +70,54 @@ Created with passion during the **Avalanche Summit Hackathon, London 2025**.
 
 ---
 
+## 🚀 Development & Production
+
+### Prerequisites
+- Node.js >= 18
+- pnpm >= 8
+
+### Installation
+```bash
+# Install all dependencies
+pnpm install
+```
+
+### Development
+```bash
+# Start frontend development server
+pnpm --filter @abyssos/frontend dev
+
+# Start backend development server
+pnpm --filter @abyssos/backend dev
+
+# Watch and build shared packages
+pnpm --filter @abyssos/core dev
+pnpm --filter @abyssos/ai-agent dev
+pnpm --filter @abyssos/blockchain-sdk dev
+pnpm --filter @abyssos/types dev
+```
+
+### Production Build
+```bash
+# Build all packages and apps
+pnpm build
+
+# Build specific package
+pnpm --filter @abyssos/frontend build
+pnpm --filter @abyssos/backend build
+```
+
+### Testing
+```bash
+# Run all tests
+pnpm test
+
+# Test specific package
+pnpm --filter @abyssos/frontend test
+```
+
+---
+
 ## 📄 License
 
 MIT License – free to use, contribute and extend.
