@@ -1,0 +1,26 @@
+{
+  "name": "@abyssos/ai-agent",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src/",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@abyssos/core": "workspace:*",
+    "@abyssos/types": "workspace:*",
+    "openai": "^4.28.0",
+    "langchain": "^0.1.17"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.2",
+    "typescript": "^5.3.3",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.12"
+  }
+} 
