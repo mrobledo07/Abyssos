@@ -7,7 +7,7 @@ import TokenAnalysis from "./pages/TokenAnalysis";
 
 function App() {
   return (
-    <Box minH="100vh">
+    <Box minH="100vh" position="relative" zIndex={1}>
       <MainLayout>
         <Routes>
           <Route path="/" element={<Home />} />
