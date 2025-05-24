@@ -12,7 +12,6 @@ import {
   ModalHeader,
   ModalBody,
   ModalCloseButton,
-  useDisclosure,
   Spinner,
   Table,
   Thead,
@@ -66,7 +65,6 @@ function Analysis() {
   const [chatMessages, setChatMessages] = useState<
     Array<{ role: "user" | "assistant"; content: string }>
   >([]);
-  const { isOpen, onOpen, onClose } = useDisclosure();
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [analysisComplete, setAnalysisComplete] = useState(false);
@@ -75,6 +73,8 @@ function Analysis() {
   );
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const [isTableModalOpen, setIsTableModalOpen] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
 
   const exampleAnalysis: AnalysisData = {
     address: "0xabc123...def456",
@@ -129,7 +129,7 @@ function Analysis() {
 
   const performAnalysis = () => {
     setIsLoading(true);
-    onOpen();
+    setIsTableModalOpen(true);
     setChatMessages([]);
     setChatInput("");
 
@@ -161,6 +161,10 @@ function Analysis() {
     }, 1000);
 
     setChatInput("");
+  };
+
+  const handleDigDeeper = () => {
+    setIsChatModalOpen(true);
   };
 
   const getRiskColor = (level: string) => {
@@ -236,7 +240,7 @@ function Analysis() {
                 colorScheme="blue"
                 onClick={() => {
                   setShowConfirmDialog(false);
-                  onOpen();
+                  setIsTableModalOpen(true);
                   setAnalysisComplete(true);
                 }}
                 ml={3}
@@ -259,239 +263,257 @@ function Analysis() {
       </AlertDialog>
 
       <Modal
-        isOpen={isOpen}
-        onClose={onClose}
+        isOpen={isTableModalOpen}
+        onClose={() => setIsTableModalOpen(false)}
         isCentered
-        size={isExpanded ? "full" : "xl"}
+        size="xl"
       >
         <ModalOverlay />
         <ModalContent
           bg="gray.800"
-          maxW={isExpanded ? "100vw" : "xl"}
-          h={isExpanded ? "90vh" : "auto"}
+          maxW="xl"
+          transition="all 0.3s ease-in-out"
+          position="relative"
+          left={isChatModalOpen ? "-25%" : "auto"}
         >
           <ModalHeader>
-            <HStack justify="space-between">
+            <HStack spacing={4}>
               <Text>Analysis Results</Text>
-              {isExpanded && (
-                <IconButton
-                  aria-label="Expand view"
-                  icon={<FaExpand />}
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  variant="ghost"
-                />
+              {analysisComplete && !isChatModalOpen && (
+                <Button
+                  leftIcon={<FaRobot />}
+                  colorScheme="purple"
+                  size="md"
+                  onClick={handleDigDeeper}
+                  _hover={{
+                    transform: "scale(1.05)",
+                    boxShadow: "0 0 20px rgba(159, 122, 234, 0.5)",
+                  }}
+                  transition="all 0.2s"
+                >
+                  Dig Deeper
+                </Button>
               )}
             </HStack>
           </ModalHeader>
           <ModalCloseButton />
-          <ModalBody pb={6} position="relative">
+          <ModalBody pb={6}>
             {isLoading ? (
               <VStack spacing={4} py={4}>
                 <Spinner size="xl" color="brand.500" />
                 <Text>Analyzing blockchain data...</Text>
               </VStack>
             ) : (
-              <Flex h="full" gap={4}>
-                <Box flex="1" overflowY="auto">
-                  <Table variant="simple" colorScheme="whiteAlpha">
-                    <Thead>
-                      <Tr>
-                        <Th color="white">Parameter</Th>
-                        <Th color="white">Value</Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      <Tr>
-                        <Td>Address</Td>
-                        <Td>{currentAnalysis?.address}</Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Risk Score</Td>
-                        <Td>
-                          <Badge
-                            colorScheme={getRiskColor(
-                              currentAnalysis?.risk_level || ""
-                            )}
-                          >
-                            {currentAnalysis?.score}/100
-                          </Badge>
-                        </Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Risk Level</Td>
-                        <Td>
-                          <Badge
-                            colorScheme={getRiskColor(
-                              currentAnalysis?.risk_level || ""
-                            )}
-                          >
-                            {currentAnalysis?.risk_level.toUpperCase()}
-                          </Badge>
-                        </Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Wallet Age</Td>
-                        <Td>
-                          {currentAnalysis?.wallet_profile.wallet_age_days} days
-                        </Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Transaction Count</Td>
-                        <Td>{currentAnalysis?.wallet_profile.tx_count}</Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Contract Deploys</Td>
-                        <Td>
-                          {currentAnalysis?.wallet_profile.contract_deploys}
-                        </Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Token Mints</Td>
-                        <Td>{currentAnalysis?.wallet_profile.token_mints}</Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Interacted with Known Rug</Td>
-                        <Td>
-                          {currentAnalysis?.wallet_profile
-                            .interacted_with_known_rug
-                            ? "Yes"
-                            : "No"}
-                        </Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Contract Verified</Td>
-                        <Td>
-                          {currentAnalysis?.contract_profile.is_verified
-                            ? "Yes"
-                            : "No"}
-                        </Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Can Mint Tokens</Td>
-                        <Td>
-                          {currentAnalysis?.contract_profile.has_mint_function
-                            ? "Yes"
-                            : "No"}
-                        </Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Owner Controls Minting</Td>
-                        <Td>
-                          {currentAnalysis?.contract_profile
-                            .owner_controls_minting
-                            ? "Yes"
-                            : "No"}
-                        </Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Can Pause Contract</Td>
-                        <Td>
-                          {currentAnalysis?.contract_profile.can_pause_contract
-                            ? "Yes"
-                            : "No"}
-                        </Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Social Sentiment</Td>
-                        <Td>
-                          <Badge
-                            colorScheme={
-                              currentAnalysis?.social_sentiment === "negative"
-                                ? "red"
-                                : "green"
-                            }
-                          >
-                            {currentAnalysis?.social_sentiment.toUpperCase()}
-                          </Badge>
-                        </Td>
-                      </Tr>
-                      <Tr>
-                        <Td>Analysis Date</Td>
-                        <Td>
-                          {new Date(
-                            currentAnalysis?.timestamp || ""
-                          ).toLocaleString()}
-                        </Td>
-                      </Tr>
-                    </Tbody>
-                  </Table>
-                </Box>
-
-                {isExpanded && (
-                  <>
-                    <Divider orientation="vertical" />
-                    <Box flex="1" display="flex" flexDirection="column">
-                      <Box flex="1" overflowY="auto" mb={4}>
-                        {chatMessages.map((msg, index) => (
-                          <Box
-                            key={index}
-                            bg={
-                              msg.role === "user"
-                                ? "whiteAlpha.200"
-                                : "whiteAlpha.100"
-                            }
-                            p={3}
-                            borderRadius="md"
-                            mb={2}
-                            ml={msg.role === "user" ? "auto" : 0}
-                            mr={msg.role === "user" ? 0 : "auto"}
-                            maxW="80%"
-                          >
-                            <HStack spacing={2} mb={1}>
-                              {msg.role === "assistant" && <FaRobot />}
-                              <Text fontWeight="bold">
-                                {msg.role === "user" ? "You" : "AI Assistant"}
-                              </Text>
-                            </HStack>
-                            <Text>{msg.content}</Text>
-                          </Box>
-                        ))}
-                      </Box>
-                      <HStack>
-                        <Textarea
-                          value={chatInput}
-                          onChange={(e) => setChatInput(e.target.value)}
-                          placeholder="Ask about the analysis..."
-                          size="sm"
-                          resize="none"
-                          rows={1}
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              handleChat();
-                            }
-                          }}
-                        />
-                        <IconButton
-                          aria-label="Send message"
-                          icon={<FaRobot />}
-                          onClick={handleChat}
-                          colorScheme="brand"
-                        />
-                      </HStack>
-                    </Box>
-                  </>
-                )}
-              </Flex>
+              <Box overflowY="auto" maxH="70vh">
+                <Table variant="simple" colorScheme="whiteAlpha">
+                  <Thead>
+                    <Tr>
+                      <Th color="white">Parameter</Th>
+                      <Th color="white">Value</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    <Tr>
+                      <Td>Address</Td>
+                      <Td>{currentAnalysis?.address}</Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Risk Score</Td>
+                      <Td>
+                        <Badge
+                          colorScheme={getRiskColor(
+                            currentAnalysis?.risk_level || ""
+                          )}
+                        >
+                          {currentAnalysis?.score}/100
+                        </Badge>
+                      </Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Risk Level</Td>
+                      <Td>
+                        <Badge
+                          colorScheme={getRiskColor(
+                            currentAnalysis?.risk_level || ""
+                          )}
+                        >
+                          {currentAnalysis?.risk_level.toUpperCase()}
+                        </Badge>
+                      </Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Wallet Age</Td>
+                      <Td>
+                        {currentAnalysis?.wallet_profile.wallet_age_days} days
+                      </Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Transaction Count</Td>
+                      <Td>{currentAnalysis?.wallet_profile.tx_count}</Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Contract Deploys</Td>
+                      <Td>
+                        {currentAnalysis?.wallet_profile.contract_deploys}
+                      </Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Token Mints</Td>
+                      <Td>{currentAnalysis?.wallet_profile.token_mints}</Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Interacted with Known Rug</Td>
+                      <Td>
+                        {currentAnalysis?.wallet_profile
+                          .interacted_with_known_rug
+                          ? "Yes"
+                          : "No"}
+                      </Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Contract Verified</Td>
+                      <Td>
+                        {currentAnalysis?.contract_profile.is_verified
+                          ? "Yes"
+                          : "No"}
+                      </Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Can Mint Tokens</Td>
+                      <Td>
+                        {currentAnalysis?.contract_profile.has_mint_function
+                          ? "Yes"
+                          : "No"}
+                      </Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Owner Controls Minting</Td>
+                      <Td>
+                        {currentAnalysis?.contract_profile
+                          .owner_controls_minting
+                          ? "Yes"
+                          : "No"}
+                      </Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Can Pause Contract</Td>
+                      <Td>
+                        {currentAnalysis?.contract_profile.can_pause_contract
+                          ? "Yes"
+                          : "No"}
+                      </Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Social Sentiment</Td>
+                      <Td>
+                        <Badge
+                          colorScheme={
+                            currentAnalysis?.social_sentiment === "negative"
+                              ? "red"
+                              : "green"
+                          }
+                        >
+                          {currentAnalysis?.social_sentiment.toUpperCase()}
+                        </Badge>
+                      </Td>
+                    </Tr>
+                    <Tr>
+                      <Td>Analysis Date</Td>
+                      <Td>
+                        {new Date(
+                          currentAnalysis?.timestamp || ""
+                        ).toLocaleString()}
+                      </Td>
+                    </Tr>
+                  </Tbody>
+                </Table>
+              </Box>
             )}
-            {analysisComplete && !isExpanded && (
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      <Modal
+        isOpen={isChatModalOpen}
+        onClose={() => setIsChatModalOpen(false)}
+        isCentered
+        size="xl"
+      >
+        <ModalOverlay />
+        <ModalContent
+          bg="gray.800"
+          maxW="xl"
+          position="absolute"
+          left="50%"
+          transition="all 0.3s ease-in-out"
+        >
+          <ModalHeader>
+            <HStack spacing={4}>
+              <Text>AI Assistant</Text>
               <Button
-                position="absolute"
-                bottom={4}
-                right={4}
-                leftIcon={<FaRobot />}
-                colorScheme="purple"
-                size="lg"
-                onClick={() => setIsExpanded(true)}
+                colorScheme="red"
+                size="md"
+                onClick={() => setIsChatModalOpen(false)}
                 _hover={{
                   transform: "scale(1.05)",
-                  boxShadow: "0 0 20px rgba(159, 122, 234, 0.5)",
+                  boxShadow: "0 0 20px rgba(255, 0, 0, 0.3)",
                 }}
                 transition="all 0.2s"
               >
-                Dig Deeper
+                Minimize
               </Button>
-            )}
+            </HStack>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <Box display="flex" flexDirection="column" h="70vh">
+              <Box flex="1" overflowY="auto" mb={4}>
+                {chatMessages.map((msg, index) => (
+                  <Box
+                    key={index}
+                    bg={
+                      msg.role === "user" ? "whiteAlpha.200" : "whiteAlpha.100"
+                    }
+                    p={3}
+                    borderRadius="md"
+                    mb={2}
+                    ml={msg.role === "user" ? "auto" : 0}
+                    mr={msg.role === "user" ? 0 : "auto"}
+                    maxW="80%"
+                  >
+                    <HStack spacing={2} mb={1}>
+                      {msg.role === "assistant" && <FaRobot />}
+                      <Text fontWeight="bold">
+                        {msg.role === "user" ? "You" : "AI Assistant"}
+                      </Text>
+                    </HStack>
+                    <Text>{msg.content}</Text>
+                  </Box>
+                ))}
+              </Box>
+              <HStack>
+                <Textarea
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Ask about the analysis..."
+                  size="sm"
+                  resize="none"
+                  rows={1}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleChat();
+                    }
+                  }}
+                />
+                <IconButton
+                  aria-label="Send message"
+                  icon={<FaRobot />}
+                  onClick={handleChat}
+                  colorScheme="brand"
+                />
+              </HStack>
+            </Box>
           </ModalBody>
         </ModalContent>
       </Modal>
