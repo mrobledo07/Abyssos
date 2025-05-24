@@ -17,7 +17,7 @@ function MainLayout({ children }: MainLayoutProps) {
               to="/"
               _hover={{ textDecoration: "none" }}
             >
-              🛡️ Abyssos
+              Abyssos
             </Heading>
             <Stack direction="row" spacing={8}>
               <Link as={RouterLink} to="/" _hover={{ textDecoration: "none" }}>
