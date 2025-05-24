@@ -498,7 +498,7 @@ Remember to be direct but professional in your analysis.`,
       if (accounts && accounts.length > 0) {
         setWalletAddress(accounts[0]);
         setIsWalletConnected(true);
-        setInput(accounts[0]); // Establecer la dirección en el input
+        // No establecemos el input automáticamente
 
         toast({
           title: "Wallet conectada",
@@ -524,7 +524,7 @@ Remember to be direct but professional in your analysis.`,
   const disconnectWallet = () => {
     setIsWalletConnected(false);
     setWalletAddress("");
-    setInput("");
+    // No limpiamos el input al desconectar
     toast({
       title: "Wallet desconectada",
       status: "info",
@@ -532,28 +532,6 @@ Remember to be direct but professional in your analysis.`,
       isClosable: true,
     });
   };
-
-  // Verificar si la wallet está conectada al cargar la página
-  useEffect(() => {
-    const checkWalletConnection = async () => {
-      if (window.avalanche) {
-        try {
-          const accounts = await window.avalanche.request({
-            method: "eth_accounts",
-          });
-          if (accounts && accounts.length > 0) {
-            setWalletAddress(accounts[0]);
-            setIsWalletConnected(true);
-            setInput(accounts[0]);
-          }
-        } catch (error) {
-          console.error("Error al verificar conexión:", error);
-        }
-      }
-    };
-
-    checkWalletConnection();
-  }, []);
 
   return (
     <Box minH="100vh" display="flex" justifyContent="center" pt={20}>

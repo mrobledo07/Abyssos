@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { FaWallet } from "react-icons/fa";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -76,27 +76,6 @@ function MainLayout({ children }: MainLayoutProps) {
       isClosable: true,
     });
   };
-
-  // Verificar si la wallet está conectada al cargar la página
-  useEffect(() => {
-    const checkWalletConnection = async () => {
-      if (window.avalanche) {
-        try {
-          const accounts = await window.avalanche.request({
-            method: "eth_accounts",
-          });
-          if (accounts && accounts.length > 0) {
-            setWalletAddress(accounts[0]);
-            setIsWalletConnected(true);
-          }
-        } catch (error) {
-          console.error("Error al verificar conexión:", error);
-        }
-      }
-    };
-
-    checkWalletConnection();
-  }, []);
 
   return (
     <Box>
