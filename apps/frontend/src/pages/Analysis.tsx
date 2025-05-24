@@ -44,6 +44,7 @@ import {
   FaDownload,
   FaEye,
   FaWallet,
+  FaTrash,
 } from "react-icons/fa";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -108,6 +109,9 @@ function Analysis() {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const toast = useToast();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showClearAllDialog, setShowClearAllDialog] = useState(false);
+  const [analysisToDelete, setAnalysisToDelete] = useState<number | null>(null);
 
   const exampleAnalysis: AnalysisData = {
     address: "0xabc123...def456",
@@ -533,6 +537,31 @@ Remember to be direct but professional in your analysis.`,
     });
   };
 
+  const deleteAnalysis = (index: number) => {
+    const newHistory = [...analysisHistory];
+    const deletedAnalysis = newHistory[index];
+    newHistory.splice(index, 1);
+    setAnalysisHistory(newHistory);
+    localStorage.setItem("analysis_history", JSON.stringify(newHistory));
+
+    // Eliminar el análisis individual del localStorage
+    localStorage.removeItem(`analysis_${deletedAnalysis.address}`);
+
+    setShowDeleteDialog(false);
+    setAnalysisToDelete(null);
+  };
+
+  const clearAllHistory = () => {
+    // Eliminar todos los análisis individuales del localStorage
+    analysisHistory.forEach((item) => {
+      localStorage.removeItem(`analysis_${item.address}`);
+    });
+
+    setAnalysisHistory([]);
+    localStorage.removeItem("analysis_history");
+    setShowClearAllDialog(false);
+  };
+
   return (
     <Box minH="100vh" display="flex" justifyContent="center" pt={20}>
       <Container maxW="container.xl">
@@ -585,7 +614,21 @@ Remember to be direct but professional in your analysis.`,
       <Modal isOpen={isHistoryOpen} onClose={onHistoryClose} size="xl">
         <ModalOverlay />
         <ModalContent bg="gray.800">
-          <ModalHeader>Analysis History</ModalHeader>
+          <ModalHeader>
+            <HStack justify="space-between" align="center">
+              <Text>Analysis History</Text>
+              {analysisHistory.length > 0 && (
+                <Button
+                  leftIcon={<FaTrash />}
+                  colorScheme="red"
+                  size="sm"
+                  onClick={() => setShowClearAllDialog(true)}
+                >
+                  Clear All
+                </Button>
+              )}
+            </HStack>
+          </ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
             <List spacing={3}>
@@ -618,6 +661,17 @@ Remember to be direct but professional in your analysis.`,
                         onClick={() => downloadAnalysis(item)}
                       >
                         Download
+                      </Button>
+                      <Button
+                        leftIcon={<FaTrash />}
+                        size="sm"
+                        colorScheme="red"
+                        onClick={() => {
+                          setAnalysisToDelete(index);
+                          setShowDeleteDialog(true);
+                        }}
+                      >
+                        Delete
                       </Button>
                     </HStack>
                   </VStack>
@@ -671,6 +725,80 @@ Remember to be direct but professional in your analysis.`,
                 ml={3}
               >
                 New Analysis
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
+      <AlertDialog
+        isOpen={showDeleteDialog}
+        leastDestructiveRef={cancelRef}
+        onClose={() => {
+          setShowDeleteDialog(false);
+          setAnalysisToDelete(null);
+        }}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent bg="gray.800">
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Delete Analysis
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure you want to delete this analysis? This action cannot
+              be undone.
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button
+                ref={cancelRef}
+                onClick={() => {
+                  setShowDeleteDialog(false);
+                  setAnalysisToDelete(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                colorScheme="red"
+                onClick={() =>
+                  analysisToDelete !== null && deleteAnalysis(analysisToDelete)
+                }
+                ml={3}
+              >
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
+      <AlertDialog
+        isOpen={showClearAllDialog}
+        leastDestructiveRef={cancelRef}
+        onClose={() => setShowClearAllDialog(false)}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent bg="gray.800">
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Clear All History
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure you want to delete all analysis history? This action
+              cannot be undone.
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button
+                ref={cancelRef}
+                onClick={() => setShowClearAllDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button colorScheme="red" onClick={clearAllHistory} ml={3}>
+                Clear All
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
