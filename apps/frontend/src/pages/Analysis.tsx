@@ -31,12 +31,23 @@ import {
   AlertDialogHeader,
   AlertDialogContent,
   AlertDialogOverlay,
+  List,
+  ListItem,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { useState, useRef, useEffect } from "react";
-import { FaRobot, FaExpand } from "react-icons/fa";
+import {
+  FaRobot,
+  FaExpand,
+  FaHistory,
+  FaDownload,
+  FaEye,
+} from "react-icons/fa";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 interface AnalysisData {
   address: string;
@@ -78,6 +89,19 @@ function Analysis() {
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const {
+    isOpen: isHistoryOpen,
+    onOpen: onHistoryOpen,
+    onClose: onHistoryClose,
+  } = useDisclosure();
+  const [analysisHistory, setAnalysisHistory] = useState<
+    Array<{
+      address: string;
+      analysis: AnalysisData;
+      chat: Array<{ role: "user" | "assistant"; content: string }>;
+      timestamp: string;
+    }>
+  >([]);
 
   const exampleAnalysis: AnalysisData = {
     address: "0xabc123...def456",
@@ -116,7 +140,32 @@ function Analysis() {
   };
 
   const storeAnalysis = (address: string, analysis: AnalysisData) => {
-    localStorage.setItem(`analysis_${address}`, JSON.stringify(analysis));
+    const timestamp = new Date().toISOString();
+    const historyItem = {
+      address,
+      analysis,
+      chat: chatMessages,
+      timestamp,
+    };
+
+    const existingHistory = JSON.parse(
+      localStorage.getItem("analysis_history") || "[]"
+    );
+    // Buscar si ya existe un análisis para esta dirección
+    const existingIndex = existingHistory.findIndex(
+      (item: any) => item.address === address
+    );
+
+    if (existingIndex !== -1) {
+      // Actualizar el análisis existente
+      existingHistory[existingIndex] = historyItem;
+    } else {
+      // Añadir nuevo análisis
+      existingHistory.unshift(historyItem);
+    }
+
+    localStorage.setItem("analysis_history", JSON.stringify(existingHistory));
+    setAnalysisHistory(existingHistory);
   };
 
   const performAnalysis = async () => {
@@ -381,6 +430,45 @@ Remember to be direct but professional in your analysis.`,
     };
   }, [isTableModalOpen, isChatModalOpen]);
 
+  useEffect(() => {
+    const history = JSON.parse(
+      localStorage.getItem("analysis_history") || "[]"
+    );
+    setAnalysisHistory(history);
+  }, []);
+
+  useEffect(() => {
+    if (currentAnalysis && chatMessages.length > 0) {
+      storeAnalysis(currentAnalysis.address, currentAnalysis);
+    }
+  }, [chatMessages]);
+
+  const downloadAnalysis = async (historyItem: (typeof analysisHistory)[0]) => {
+    const zip = new JSZip();
+
+    // Añadir el análisis
+    zip.file("analysis.json", JSON.stringify(historyItem.analysis, null, 2));
+
+    // Añadir el chat
+    zip.file("chat.json", JSON.stringify(historyItem.chat, null, 2));
+
+    // Generar y descargar el zip
+    const content = await zip.generateAsync({ type: "blob" });
+    saveAs(
+      content,
+      `analysis_${historyItem.address}_${new Date(historyItem.timestamp).toISOString().split("T")[0]}.zip`
+    );
+  };
+
+  const loadAnalysis = (historyItem: (typeof analysisHistory)[0]) => {
+    setCurrentAnalysis(historyItem.analysis);
+    setChatMessages(historyItem.chat || []);
+    setInput(historyItem.address);
+    setIsTableModalOpen(true);
+    setAnalysisComplete(true);
+    onHistoryClose();
+  };
+
   return (
     <Box minH="100vh" display="flex" justifyContent="center" pt={20}>
       <Container maxW="container.xl">
@@ -413,6 +501,68 @@ Remember to be direct but professional in your analysis.`,
           </VStack>
         </VStack>
       </Container>
+
+      <Button
+        position="fixed"
+        bottom="20px"
+        right="20px"
+        leftIcon={<FaHistory />}
+        colorScheme="purple"
+        onClick={onHistoryOpen}
+        _hover={{
+          transform: "scale(1.05)",
+          boxShadow: "0 0 20px rgba(159, 122, 234, 0.5)",
+        }}
+        transition="all 0.2s"
+      >
+        Analysis History
+      </Button>
+
+      <Modal isOpen={isHistoryOpen} onClose={onHistoryClose} size="xl">
+        <ModalOverlay />
+        <ModalContent bg="gray.800">
+          <ModalHeader>Analysis History</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <List spacing={3}>
+              {analysisHistory.map((item, index) => (
+                <ListItem
+                  key={index}
+                  p={4}
+                  borderWidth={1}
+                  borderRadius="md"
+                  borderColor="whiteAlpha.200"
+                >
+                  <VStack align="stretch" spacing={2}>
+                    <HStack justify="space-between">
+                      <Text fontWeight="bold">{item.address}</Text>
+                      <Text fontSize="sm" color="whiteAlpha.600">
+                        {new Date(item.timestamp).toLocaleString()}
+                      </Text>
+                    </HStack>
+                    <HStack spacing={2}>
+                      <Button
+                        leftIcon={<FaEye />}
+                        size="sm"
+                        onClick={() => loadAnalysis(item)}
+                      >
+                        View Analysis
+                      </Button>
+                      <Button
+                        leftIcon={<FaDownload />}
+                        size="sm"
+                        onClick={() => downloadAnalysis(item)}
+                      >
+                        Download
+                      </Button>
+                    </HStack>
+                  </VStack>
+                </ListItem>
+              ))}
+            </List>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
 
       <AlertDialog
         isOpen={showConfirmDialog}
