@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const PORT = 3000;
+const PORT = 1234;
 
 // Imports
 const dev1Data = require('./mock/dev1Data');

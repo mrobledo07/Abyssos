@@ -1,5 +1,5 @@
 {
-    "address": "0xabc123...def456",
+    "address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
     "score": 28,
     "risk_level": "high",
     "risk_tags": [
@@ -22,6 +22,5 @@
       "owner_controls_minting": true,
       "can_pause_contract": true
     },
-    "social_sentiment": "negative",
     "timestamp": "2025-05-24T14:00:00Z"
   }
