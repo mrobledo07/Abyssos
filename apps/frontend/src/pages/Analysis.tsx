@@ -34,6 +34,7 @@ import {
   List,
   ListItem,
   useDisclosure,
+  useToast,
 } from "@chakra-ui/react";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -42,12 +43,14 @@ import {
   FaHistory,
   FaDownload,
   FaEye,
+  FaWallet,
 } from "react-icons/fa";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { Avalanche } from "avalanche";
 
 interface AnalysisData {
   address: string;
@@ -102,6 +105,9 @@ function Analysis() {
       timestamp: string;
     }>
   >([]);
+  const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState("");
+  const toast = useToast();
 
   const exampleAnalysis: AnalysisData = {
     address: "0xabc123...def456",
@@ -468,6 +474,86 @@ Remember to be direct but professional in your analysis.`,
     setAnalysisComplete(true);
     onHistoryClose();
   };
+
+  // Función para conectar con Core Wallet
+  const connectWallet = async () => {
+    try {
+      // Verificar si Core Wallet está instalado
+      if (!window.avalanche) {
+        toast({
+          title: "Core Wallet no encontrado",
+          description: "Por favor, instala Core Wallet para continuar",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      // Solicitar conexión
+      const accounts = await window.avalanche.request({
+        method: "eth_requestAccounts",
+      });
+
+      if (accounts && accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+        setIsWalletConnected(true);
+        setInput(accounts[0]); // Establecer la dirección en el input
+
+        toast({
+          title: "Wallet conectada",
+          description: `Conectado a ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`,
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error al conectar wallet:", error);
+      toast({
+        title: "Error al conectar",
+        description: "No se pudo conectar con Core Wallet",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  // Función para desconectar wallet
+  const disconnectWallet = () => {
+    setIsWalletConnected(false);
+    setWalletAddress("");
+    setInput("");
+    toast({
+      title: "Wallet desconectada",
+      status: "info",
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
+  // Verificar si la wallet está conectada al cargar la página
+  useEffect(() => {
+    const checkWalletConnection = async () => {
+      if (window.avalanche) {
+        try {
+          const accounts = await window.avalanche.request({
+            method: "eth_accounts",
+          });
+          if (accounts && accounts.length > 0) {
+            setWalletAddress(accounts[0]);
+            setIsWalletConnected(true);
+            setInput(accounts[0]);
+          }
+        } catch (error) {
+          console.error("Error al verificar conexión:", error);
+        }
+      }
+    };
+
+    checkWalletConnection();
+  }, []);
 
   return (
     <Box minH="100vh" display="flex" justifyContent="center" pt={20}>
@@ -992,6 +1078,15 @@ Remember to be direct but professional in your analysis.`,
       )}
     </Box>
   );
+}
+
+// Añadir la declaración de tipos para window.avalanche
+declare global {
+  interface Window {
+    avalanche: {
+      request: (args: { method: string; params?: any[] }) => Promise<string[]>;
+    };
+  }
 }
 
 export default Analysis;
