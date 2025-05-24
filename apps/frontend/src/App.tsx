@@ -4,8 +4,7 @@ import MainLayout from "./layouts/MainLayout";
 import Home from "./pages/Home";
 import Features from "./pages/Features";
 import About from "./pages/About";
-import WalletAnalysis from "./pages/WalletAnalysis";
-import TokenAnalysis from "./pages/TokenAnalysis";
+import Analysis from "./pages/Analysis";
 
 function App() {
   return (
@@ -22,8 +21,7 @@ function App() {
               </Box>
             }
           />
-          <Route path="/wallet/:address" element={<WalletAnalysis />} />
-          <Route path="/token/:address" element={<TokenAnalysis />} />
+          <Route path="/analysis" element={<Analysis />} />
         </Routes>
       </MainLayout>
     </Box>

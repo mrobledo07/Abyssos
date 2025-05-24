@@ -25,17 +25,10 @@ function MainLayout({ children }: MainLayoutProps) {
               </Link>
               <Link
                 as={RouterLink}
-                to="/wallet/0x..."
+                to="/analysis"
                 _hover={{ textDecoration: "none" }}
               >
-                Wallet Analysis
-              </Link>
-              <Link
-                as={RouterLink}
-                to="/token/0x..."
-                _hover={{ textDecoration: "none" }}
-              >
-                Token Analysis
+                Analysis
               </Link>
             </Stack>
           </Flex>
