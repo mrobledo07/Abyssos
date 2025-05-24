@@ -279,7 +279,7 @@ function Analysis() {
           <ModalHeader>
             <HStack spacing={4}>
               <Text>Analysis Results</Text>
-              {analysisComplete && !isChatModalOpen && (
+              {analysisComplete && !isLoading && !isChatModalOpen && (
                 <Button
                   leftIcon={<FaRobot />}
                   colorScheme="purple"
