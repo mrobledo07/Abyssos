@@ -40,42 +40,64 @@ const theme = extendTheme({
         backgroundAttachment: "fixed",
         backgroundRepeat: "no-repeat",
         position: "relative",
-        /*"&::before": {
+        "&::before": {
           content: '""',
           position: "fixed",
           top: 0,
           left: 0,
           width: "100%",
           height: "100%",
-          backgroundColor: "rgba(0, 0, 0, 0.7)",
+          background:
+            "linear-gradient(135deg, rgba(255, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.95) 100%)",
           zIndex: -1,
-        },*/
+        },
       },
     },
   },
   components: {
     Heading: {
       baseStyle: {
-        color: "#FF0000",
-        textShadow: "2px 2px 4px rgba(0, 0, 0, 0.8)",
+        color: "#FFFFFF",
+        textShadow:
+          "4px 4px 8px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 0, 0, 0.7), 0 0 30px rgba(255, 0, 0, 0.4)",
         fontWeight: "bold",
-        background: "linear-gradient(to bottom right, #FF0000, #990000)",
+        background: "linear-gradient(to bottom right, #FF0000, #FF4444)",
         WebkitBackgroundClip: "text",
         WebkitTextFillColor: "transparent",
+        letterSpacing: "wider",
+        filter: "brightness(1.2)",
       },
     },
     Text: {
       baseStyle: {
-        color: "#FF3333",
-        textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)",
-        background: "linear-gradient(to bottom right, #FF3333, #990000)",
+        color: "#FFFFFF",
+        textShadow:
+          "3px 3px 6px rgba(0, 0, 0, 0.9), 0 0 12px rgba(255, 0, 0, 0.6), 0 0 20px rgba(255, 0, 0, 0.3)",
+        background: "linear-gradient(to bottom right, #FF3333, #FF7777)",
         WebkitBackgroundClip: "text",
         WebkitTextFillColor: "transparent",
+        filter: "brightness(1.1)",
+      },
+    },
+    Link: {
+      baseStyle: {
+        color: "#FFFFFF",
+        textShadow:
+          "3px 3px 6px rgba(0, 0, 0, 0.9), 0 0 12px rgba(255, 0, 0, 0.6), 0 0 20px rgba(255, 0, 0, 0.3)",
+        background: "linear-gradient(to bottom right, #FF3333, #FF7777)",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        filter: "brightness(1.1)",
+        _hover: {
+          textDecoration: "none",
+          filter: "brightness(1.3)",
+        },
       },
     },
     Icon: {
       baseStyle: {
         color: "brand.500",
+        filter: "drop-shadow(0 0 12px rgba(255, 0, 0, 0.7)) brightness(1.2)",
       },
     },
   },
