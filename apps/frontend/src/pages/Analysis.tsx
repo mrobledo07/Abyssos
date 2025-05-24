@@ -34,6 +34,9 @@ import {
 } from "@chakra-ui/react";
 import { useState, useRef, useEffect } from "react";
 import { FaRobot, FaExpand } from "react-icons/fa";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
 
 interface AnalysisData {
   address: string;
@@ -74,6 +77,7 @@ function Analysis() {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [isChatLoading, setIsChatLoading] = useState(false);
 
   const exampleAnalysis: AnalysisData = {
     address: "0xabc123...def456",
@@ -214,25 +218,133 @@ function Analysis() {
     }
   };
 
-  const handleChat = () => {
-    if (!chatInput.trim()) return;
+  const handleChat = async () => {
+    if (!chatInput.trim() || !currentAnalysis) return;
 
     // Add user message
-    setChatMessages((prev) => [...prev, { role: "user", content: chatInput }]);
+    const userMessage = { role: "user" as const, content: chatInput };
+    setChatMessages((prev) => [...prev, userMessage]);
+    setChatInput("");
+    setIsChatLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const response = await fetch(
+        "https://llm.chutes.ai/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer cpk_ce89ceb6867a481f8909e06e3ebf4a92.9cbd21fdce06559abc33312355e06bcd.y295y5uCV1OC4i3CGjjoiIk9Fllwc9Kj`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "deepseek-ai/DeepSeek-V3-0324",
+            messages: [
+              {
+                role: "system",
+                content: `You are a blockchain analysis assistant specialized in detecting potential scams and security risks. 
+              
+Current Analysis Data:
+${JSON.stringify(currentAnalysis, null, 2)}
+
+Scoring System Explanation:
+The trust score is calculated based on the following factors:
+- Age Score (max 20 points): Based on wallet age in days
+- Transaction Score (max 30 points): Based on transaction volume
+- Risk Penalty (max -30 points): Based on interactions with risky contracts
+- Contract Verification Bonus (max 15 points): If the contract is verified
+- Minting Penalty (max -10 points): If the contract can mint tokens
+- Owner Control Penalty (max -5 points): If owner controls minting
+- Pause Contract Penalty (max -5 points): If contract can be paused
+- Token Mint Penalty (max -20 points): Based on amount of tokens minted
+- Rug Pool Penalty (max -15 points): If interacted with known rug pools
+
+Risk Levels:
+- Low Risk: Score > 66
+- Medium Risk: Score between 33 and 66
+- High Risk: Score < 33
+
+Your task is to:
+1. Analyze the provided data and explain the risk level
+2. Highlight specific risk factors and their implications
+3. Provide clear explanations about why certain factors are concerning
+4. Suggest what additional information might be needed
+5. Keep responses focused on security and risk assessment
+6. Use the scoring system to explain why the project might be risky
+
+Remember to be direct but professional in your analysis.`,
+              },
+              ...chatMessages,
+              userMessage,
+            ],
+            stream: true,
+            max_tokens: 1024,
+            temperature: 0.7,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to get response from AI");
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("No reader available");
+      }
+
+      let assistantMessage = "";
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            if (data === "[DONE]") continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices[0]?.delta?.content || "";
+              assistantMessage += content;
+
+              // Update the last message with the new content
+              setChatMessages((prev) => {
+                const newMessages = [...prev];
+                const lastMessage = newMessages[newMessages.length - 1];
+                if (lastMessage.role === "assistant") {
+                  lastMessage.content = assistantMessage;
+                } else {
+                  newMessages.push({
+                    role: "assistant",
+                    content: assistantMessage,
+                  });
+                }
+                return newMessages;
+              });
+            } catch (e) {
+              console.error("Error parsing chunk:", e);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error in chat:", error);
       setChatMessages((prev) => [
         ...prev,
         {
           role: "assistant",
           content:
-            "I'm analyzing the data and will provide insights about this wallet's risk profile. What specific aspect would you like to know more about?",
+            "I apologize, but I'm having trouble connecting to the AI service. Please try again later.",
         },
       ]);
-    }, 1000);
-
-    setChatInput("");
+    } finally {
+      setIsChatLoading(false);
+    }
   };
 
   const handleDigDeeper = () => {
@@ -606,7 +718,96 @@ function Analysis() {
                         {msg.role === "user" ? "You" : "AI Assistant"}
                       </Text>
                     </HStack>
-                    <Text>{msg.content}</Text>
+                    {msg.role === "assistant" ? (
+                      <Box className="markdown-content">
+                        <ReactMarkdown
+                          components={{
+                            code: ({
+                              node,
+                              inline,
+                              className,
+                              children,
+                              ...props
+                            }: any) => {
+                              const match = /language-(\w+)/.exec(
+                                className || ""
+                              );
+                              return !inline && match ? (
+                                <SyntaxHighlighter
+                                  style={vscDarkPlus}
+                                  language={match[1]}
+                                  PreTag="div"
+                                  {...props}
+                                >
+                                  {String(children).replace(/\n$/, "")}
+                                </SyntaxHighlighter>
+                              ) : (
+                                <code className={className} {...props}>
+                                  {children}
+                                </code>
+                              );
+                            },
+                            p: ({ children }) => <Text mb={2}>{children}</Text>,
+                            ul: ({ children }) => (
+                              <Box as="ul" pl={4} mb={2}>
+                                {children}
+                              </Box>
+                            ),
+                            ol: ({ children }) => (
+                              <Box as="ol" pl={4} mb={2}>
+                                {children}
+                              </Box>
+                            ),
+                            li: ({ children }) => (
+                              <Box as="li" mb={1}>
+                                {children}
+                              </Box>
+                            ),
+                            h1: ({ children }) => (
+                              <Heading size="lg" mb={2}>
+                                {children}
+                              </Heading>
+                            ),
+                            h2: ({ children }) => (
+                              <Heading size="md" mb={2}>
+                                {children}
+                              </Heading>
+                            ),
+                            h3: ({ children }) => (
+                              <Heading size="sm" mb={2}>
+                                {children}
+                              </Heading>
+                            ),
+                            blockquote: ({ children }) => (
+                              <Box
+                                as="blockquote"
+                                pl={4}
+                                borderLeft="4px solid"
+                                borderColor="gray.500"
+                                mb={2}
+                              >
+                                {children}
+                              </Box>
+                            ),
+                            a: ({ children, href }) => (
+                              <Text
+                                as="a"
+                                href={href}
+                                color="blue.400"
+                                textDecoration="underline"
+                                _hover={{ color: "blue.300" }}
+                              >
+                                {children}
+                              </Text>
+                            ),
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      </Box>
+                    ) : (
+                      <Text>{msg.content}</Text>
+                    )}
                   </Box>
                 ))}
               </Box>
@@ -624,12 +825,15 @@ function Analysis() {
                       handleChat();
                     }
                   }}
+                  isDisabled={isChatLoading}
                 />
                 <IconButton
                   aria-label="Send message"
                   icon={<FaRobot />}
                   onClick={handleChat}
                   colorScheme="brand"
+                  isLoading={isChatLoading}
+                  isDisabled={isChatLoading}
                 />
               </HStack>
             </Box>
