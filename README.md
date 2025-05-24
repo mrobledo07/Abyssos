@@ -8,24 +8,46 @@
 
 ## 🚀 What is Abyssos?
 
-Abyssos combines three powerful components:
-1. **Artificial Intelligence Agent**: Scrapes and analyzes data from:
-   - Avalanche on-chain activity
-   - Token behavior
-   - Project websites
-   - Twitter/X profiles and engagement
-   - Known scam patterns and community signals
+Abyssos currently implements and plans to expand with these powerful components:
 
-2. **Smart Risk Scoring**: Outputs a scam **risk score (0-10)** along with:
-   - 🧠 Technical summary
-   - 🌐 Community-level insights
-   - 🔍 Surface-level overview
+1. **Current Implementation**:
+   - **On-Chain Analysis (mock-data right now)**: Comprehensive risk assessment of blockchain projects by analyzing:
+     - Wallet age and transaction history
+     - Contract verification status
+     - Token minting capabilities
+     - Owner control features
+     - Interaction with known risky contracts
+   - **AI Assistant**: An intelligent chat interface that:
+     - Explains risk factors in detail
+     - Provides context for each risk score
+     - Answers questions about the analysis
+     - Suggests additional security considerations
 
-3. **Decentralized Report Registry**:
-   - Each analysis is stored on Avalanche.
-   - Reports are minted as **unique NFTs**.
-   - Users who generate insightful reports can earn token/NFT rewards every time their analysis is accessed.
-   - Premium users can access a curated set of high-confidence project evaluations.
+2. **Future Components** (Planned):
+   - **Advanced AI Agent**: Will scrape and analyze data from:
+     - Avalanche on-chain activity patterns
+     - Token behavior metrics
+     - Project website analysis
+     - Social media presence and engagement
+     - Known scam pattern recognition
+     - Community sentiment analysis
+
+   - **Decentralized Report Registry**:
+     - Store analysis results on Avalanche blockchain
+     - Mint reports as unique NFTs
+     - Reward system for insightful analysis creators
+     - Premium access to curated high-confidence evaluations
+
+3. **Smart Risk Scoring** (Current & Future):
+   - Current: Detailed risk score (0-100) with:
+     - Technical risk factors
+     - Contract security analysis
+     - Wallet behavior patterns
+   - Future: Enhanced scoring with:
+     - Community-level insights
+     - Social media sentiment
+     - Historical scam pattern matching
+     - Real-time threat detection
 
 ---
 
@@ -75,48 +97,105 @@ Created with passion during the **Avalanche Summit Hackathon, London 2025**.
 ### Prerequisites
 - Node.js >= 18
 - pnpm >= 8
+- Core Wallet browser extension
 
 ### Installation
+1. **Install pnpm** (if not installed):
 ```bash
-# Install all dependencies
+npm install -g pnpm
+```
+
+2. **Clone the repository**:
+```bash
+git clone <repository-url>
+cd Abyssos
+```
+
+3. **Install backend dependencies**:
+```bash
+cd apps/backend
 pnpm install
 ```
 
-### Development
+4. **Install frontend dependencies**:
 ```bash
-# Start frontend development server
-pnpm --filter @abyssos/frontend dev
-
-# Start backend development server
-pnpm --filter @abyssos/backend dev
-
-# Watch and build shared packages
-pnpm --filter @abyssos/core dev
-pnpm --filter @abyssos/ai-agent dev
-pnpm --filter @abyssos/blockchain-sdk dev
-pnpm --filter @abyssos/types dev
+cd ../frontend
+pnpm install
 ```
 
-### Production Build
+### Running the Application
+5. **Start the backend**:
 ```bash
-# Build all packages and apps
-pnpm build
+cd apps/backend
+pnpm run dev
+```
+The backend will run on `http://localhost:1234`
 
-# Build specific package
-pnpm --filter @abyssos/frontend build
-pnpm --filter @abyssos/backend build
+6. **Start the frontend** (in a new terminal):
+```bash
+cd apps/frontend
+pnpm run dev
+```
+The frontend will run on `http://localhost:3000`
+
+7. **Verify the installation**:
+   - Open `http://localhost:3000` in your browser
+   - Ensure Core Wallet is installed
+   - Click "Connect Wallet" in the navigation bar
+   - Test the analysis with a wallet address
+
+### Project Structure
+```
+Abyssos/
+├── apps/
+│   ├── backend/
+│   │   ├── package.json
+│   │   └── src/
+│   └── frontend/
+│       ├── package.json
+│       └── src/
 ```
 
-### Testing
-```bash
-# Run all tests
-pnpm test
+### Troubleshooting
+#### Common Issues
+- **Wallet connection issues**: Ensure Core Wallet is installed
+- **Dependency errors**: Run `pnpm install` in both directories
 
-# Test specific package
-pnpm --filter @abyssos/frontend test
+#### Useful Commands
+```bash
+# Clear pnpm cache
+pnpm store prune
+
+# Reinstall dependencies
+pnpm install --force
+
+# View backend logs
+cd apps/backend && pnpm run dev
+
+# View frontend logs
+cd apps/frontend && pnpm run dev
 ```
 
----
+### Important Notes
+- The backend must be running before starting the frontend
+- Ensure ports 1234 (backend) and 3000 (frontend) are available
+- Have Core Wallet installed and configured in your browser (optional)
+- Keep both terminal windows open while developing
+
+### Features
+- Wallet connection with Core Wallet
+- Blockchain analysis for addresses, transactions, and tokens
+- Risk assessment and scoring
+- Chat interface for detailed analysis
+- Analysis history with export functionality
+- Real-time data updates
+
+### Contributing
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 
