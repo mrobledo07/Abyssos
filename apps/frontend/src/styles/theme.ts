@@ -34,7 +34,7 @@ const theme = extendTheme({
         minHeight: "100vh",
         bg: "gray.900",
         color: "white",
-        backgroundImage: "url('/images/ava_red.webp')",
+        backgroundImage: "url('/images/ava_space.webp')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundAttachment: "fixed",
@@ -48,7 +48,7 @@ const theme = extendTheme({
           width: "100%",
           height: "100%",
           background:
-            "linear-gradient(135deg, rgba(255, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.95) 100%)",
+            "linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.6) 100%)",
           zIndex: -1,
         },
       },
@@ -58,46 +58,31 @@ const theme = extendTheme({
     Heading: {
       baseStyle: {
         color: "#FFFFFF",
-        textShadow:
-          "4px 4px 8px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 0, 0, 0.7), 0 0 30px rgba(255, 0, 0, 0.4)",
+        textShadow: "0 0 20px rgba(255, 255, 255, 0.5)",
         fontWeight: "bold",
-        background: "linear-gradient(to bottom right, #FF0000, #FF4444)",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
         letterSpacing: "wider",
-        filter: "brightness(1.2)",
       },
     },
     Text: {
       baseStyle: {
         color: "#FFFFFF",
-        textShadow:
-          "3px 3px 6px rgba(0, 0, 0, 0.9), 0 0 12px rgba(255, 0, 0, 0.6), 0 0 20px rgba(255, 0, 0, 0.3)",
-        background: "linear-gradient(to bottom right, #FF3333, #FF7777)",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-        filter: "brightness(1.1)",
+        textShadow: "0 0 10px rgba(255, 255, 255, 0.3)",
       },
     },
     Link: {
       baseStyle: {
         color: "#FFFFFF",
-        textShadow:
-          "3px 3px 6px rgba(0, 0, 0, 0.9), 0 0 12px rgba(255, 0, 0, 0.6), 0 0 20px rgba(255, 0, 0, 0.3)",
-        background: "linear-gradient(to bottom right, #FF3333, #FF7777)",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-        filter: "brightness(1.1)",
+        textShadow: "0 0 10px rgba(255, 255, 255, 0.3)",
         _hover: {
           textDecoration: "none",
-          filter: "brightness(1.3)",
+          textShadow: "0 0 15px rgba(255, 255, 255, 0.6)",
         },
       },
     },
     Icon: {
       baseStyle: {
-        color: "brand.500",
-        filter: "drop-shadow(0 0 12px rgba(255, 0, 0, 0.7)) brightness(1.2)",
+        color: "#FFFFFF",
+        filter: "drop-shadow(0 0 10px rgba(255, 255, 255, 0.5))",
       },
     },
   },
