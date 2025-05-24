@@ -1,4 +1,5 @@
 {
+  "name": "abyssos",
   "buildCommand": "pnpm install && cd apps/frontend && pnpm build",
   "outputDirectory": "apps/frontend/dist",
   "framework": "vite",
