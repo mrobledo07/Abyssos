@@ -66,7 +66,6 @@ function Analysis() {
     Array<{ role: "user" | "assistant"; content: string }>
   >([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [currentAnalysis, setCurrentAnalysis] = useState<AnalysisData | null>(
     null
@@ -75,9 +74,6 @@ function Analysis() {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState<"table" | "chat" | null>(
-    "table"
-  );
 
   const exampleAnalysis: AnalysisData = {
     address: "0xabc123...def456",
@@ -119,6 +115,94 @@ function Analysis() {
     localStorage.setItem(`analysis_${address}`, JSON.stringify(analysis));
   };
 
+  const performAnalysis = async () => {
+    setIsLoading(true);
+    setIsTableModalOpen(true);
+    setChatMessages([]);
+    setChatInput("");
+
+    try {
+      // Simular tiempo de carga inicial
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Llamada a la API
+      const response = await fetch(
+        `http://localhost:1234/trust-score?address=${input}`
+      );
+      const trustScoreData = await response.json();
+
+      // Simular tiempo de carga entre llamadas
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Obtener los datos de dev1 y dev3
+      const dev1Response = await fetch("http://localhost:1234/dev1-data");
+      const dev1Data = await dev1Response.json();
+
+      // Simular tiempo de carga entre llamadas
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const dev3Response = await fetch("http://localhost:1234/dev3-data");
+      const dev3Data = await dev3Response.json();
+
+      // Simular tiempo de procesamiento final
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Combinar todos los datos
+      const combinedData: AnalysisData = {
+        address: input,
+        score: trustScoreData.score,
+        risk_level:
+          trustScoreData.score <= 33
+            ? "low"
+            : trustScoreData.score <= 66
+              ? "medium"
+              : "high",
+        risk_tags: generateRiskTags(trustScoreData.factors),
+        wallet_profile: {
+          wallet_age_days: dev1Data.ageInDays,
+          tx_count: Math.round(dev1Data.txVolume * 100),
+          contract_deploys: dev1Data.deployedContracts,
+          token_mints: dev1Data.tokenMinted || 0,
+          interacted_with_known_rug:
+            dev1Data.interactedWithKnownRugPools || false,
+        },
+        contract_profile: {
+          has_mint_function: dev1Data.canMintTokens || false,
+          is_verified: dev1Data.contractVerified || false,
+          owner_controls_minting: dev1Data.ownerControlsMinting || false,
+          can_pause_contract: dev1Data.ownerCanPauseContract || false,
+        },
+        social_sentiment: "neutral",
+        timestamp: new Date().toISOString(),
+      };
+
+      setCurrentAnalysis(combinedData);
+      setAnalysisComplete(true);
+      storeAnalysis(input, combinedData);
+    } catch (error) {
+      console.error("Error during analysis:", error);
+      // En caso de error, usar datos de ejemplo
+      setCurrentAnalysis(exampleAnalysis);
+      setAnalysisComplete(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateRiskTags = (factors: any): string[] => {
+    const tags: string[] = [];
+
+    if (factors.ageScore < 10) tags.push("new_wallet");
+    if (factors.riskPenalty > 15) tags.push("risky_interactions");
+    if (factors.mintingPenalty < 0) tags.push("can_mint_tokens");
+    if (factors.verificationBonus === 0) tags.push("unverified_contract");
+    if (factors.ownerControlPenalty < 0) tags.push("owner_controls_minting");
+    if (factors.pauseContractPenalty < 0) tags.push("can_pause_contract");
+    if (factors.rugPoolPenalty < 0) tags.push("rug_pool_interaction");
+
+    return tags;
+  };
+
   const handleAnalyze = () => {
     const previousAnalysis = checkPreviousAnalysis(input);
 
@@ -128,21 +212,6 @@ function Analysis() {
     } else {
       performAnalysis();
     }
-  };
-
-  const performAnalysis = () => {
-    setIsLoading(true);
-    setIsTableModalOpen(true);
-    setChatMessages([]);
-    setChatInput("");
-
-    setTimeout(() => {
-      setIsLoading(false);
-      setAnalysisComplete(true);
-      setCurrentAnalysis(exampleAnalysis);
-      localStorage.removeItem(`analysis_${input}`);
-      storeAnalysis(input, exampleAnalysis);
-    }, 3000);
   };
 
   const handleChat = () => {
