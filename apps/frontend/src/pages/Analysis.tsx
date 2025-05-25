@@ -142,10 +142,24 @@ function Analysis() {
   };
 
   const checkPreviousAnalysis = (address: string) => {
+    // Primero verificar en el historial
+    const history = JSON.parse(
+      localStorage.getItem("analysis_history") || "[]"
+    );
+    const previousAnalysis = history.find(
+      (item: any) => item.address === address
+    );
+
+    if (previousAnalysis) {
+      return previousAnalysis.analysis;
+    }
+
+    // Si no está en el historial, verificar en el almacenamiento individual
     const storedAnalysis = localStorage.getItem(`analysis_${address}`);
     if (storedAnalysis) {
       return JSON.parse(storedAnalysis) as AnalysisData;
     }
+
     return null;
   };
 
@@ -158,24 +172,25 @@ function Analysis() {
       timestamp,
     };
 
+    // Guardar en el historial
     const existingHistory = JSON.parse(
       localStorage.getItem("analysis_history") || "[]"
     );
-    // Buscar si ya existe un análisis para esta dirección
     const existingIndex = existingHistory.findIndex(
       (item: any) => item.address === address
     );
 
     if (existingIndex !== -1) {
-      // Actualizar el análisis existente
       existingHistory[existingIndex] = historyItem;
     } else {
-      // Añadir nuevo análisis
       existingHistory.unshift(historyItem);
     }
 
     localStorage.setItem("analysis_history", JSON.stringify(existingHistory));
     setAnalysisHistory(existingHistory);
+
+    // Guardar también individualmente
+    localStorage.setItem(`analysis_${address}`, JSON.stringify(analysis));
   };
 
   const performAnalysis = async () => {
