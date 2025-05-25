@@ -45,6 +45,7 @@ import {
   FaEye,
   FaWallet,
   FaTrash,
+  FaTimes,
 } from "react-icons/fa";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -577,6 +578,7 @@ Remember to be direct but professional in your analysis.`,
                   colorScheme="red"
                   size="sm"
                   onClick={() => setShowClearAllDialog(true)}
+                  mr={8}
                 >
                   Clear All
                 </Button>
@@ -786,25 +788,37 @@ Remember to be direct but professional in your analysis.`,
             transition="all 0.3s ease-in-out"
           >
             <Box p={4} borderBottomWidth={1} borderColor="whiteAlpha.200">
-              <HStack spacing={4}>
-                <Text fontSize="lg" fontWeight="bold">
-                  Analysis Results
-                </Text>
-                {analysisComplete && !isLoading && !isChatModalOpen && (
-                  <Button
-                    leftIcon={<FaRobot />}
-                    colorScheme="purple"
-                    size="md"
-                    onClick={handleDigDeeper}
-                    _hover={{
-                      transform: "scale(1.05)",
-                      boxShadow: "0 0 20px rgba(159, 122, 234, 0.5)",
-                    }}
-                    transition="all 0.2s"
-                  >
-                    Dig Deeper
-                  </Button>
-                )}
+              <HStack justify="space-between" align="center">
+                <HStack spacing={4}>
+                  <Text fontSize="lg" fontWeight="bold">
+                    Analysis Results
+                  </Text>
+                  {analysisComplete && !isLoading && !isChatModalOpen && (
+                    <Button
+                      leftIcon={<FaRobot />}
+                      colorScheme="purple"
+                      size="md"
+                      onClick={handleDigDeeper}
+                      _hover={{
+                        transform: "scale(1.05)",
+                        boxShadow: "0 0 20px rgba(159, 122, 234, 0.5)",
+                      }}
+                      transition="all 0.2s"
+                    >
+                      Dig Deeper
+                    </Button>
+                  )}
+                </HStack>
+                <IconButton
+                  aria-label="Close analysis"
+                  icon={<FaTimes />}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsTableModalOpen(false)}
+                  _hover={{
+                    bg: "whiteAlpha.200",
+                  }}
+                />
               </HStack>
             </Box>
             <Box p={6}>
