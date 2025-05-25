@@ -145,7 +145,7 @@ function Analysis() {
       timestamp,
     };
 
-    // Guardar en el historial
+    // Save to history
     const existingHistory = JSON.parse(
       localStorage.getItem("analysis_history") || "[]"
     );
@@ -162,7 +162,7 @@ function Analysis() {
     localStorage.setItem("analysis_history", JSON.stringify(existingHistory));
     setAnalysisHistory(existingHistory);
 
-    // Guardar también individualmente
+    // Save individually as well
     localStorage.setItem(`analysis_${address}`, JSON.stringify(analysis));
   };
 
@@ -183,8 +183,8 @@ function Analysis() {
       setCurrentAnalysis(analysisData);
       setAnalysisComplete(true);
       toast({
-        title: "Análisis Completado",
-        description: "El análisis del contrato se ha completado con éxito.",
+        title: "Analysis Completed",
+        description: "Contract analysis has been completed successfully.",
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -195,7 +195,7 @@ function Analysis() {
         error instanceof Error ? error.message : "Failed to analyze contract"
       );
       toast({
-        title: "Error en el Análisis",
+        title: "Analysis Error",
         description:
           error instanceof Error ? error.message : "Failed to analyze contract",
         status: "error",
@@ -433,14 +433,14 @@ Remember to be direct but professional in your analysis.`,
     onHistoryClose();
   };
 
-  // Función para conectar con Core Wallet
+  // Function to connect with Core Wallet
   const connectWallet = async () => {
     try {
-      // Verificar si Core Wallet está instalado
+      // Check if Core Wallet is installed
       if (!window.avalanche) {
         toast({
-          title: "Core Wallet no encontrado",
-          description: "Por favor, instala Core Wallet para continuar",
+          title: "Core Wallet not found",
+          description: "Please install Core Wallet to continue",
           status: "error",
           duration: 5000,
           isClosable: true,
@@ -448,7 +448,7 @@ Remember to be direct but professional in your analysis.`,
         return;
       }
 
-      // Solicitar conexión
+      // Request connection
       const accounts = await window.avalanche.request({
         method: "eth_requestAccounts",
       });
@@ -456,21 +456,21 @@ Remember to be direct but professional in your analysis.`,
       if (accounts && accounts.length > 0) {
         setWalletAddress(accounts[0]);
         setIsWalletConnected(true);
-        // No establecemos el input automáticamente
+        // Don't set input automatically
 
         toast({
-          title: "Wallet conectada",
-          description: `Conectado a ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`,
+          title: "Wallet Connected",
+          description: `Connected to ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`,
           status: "success",
           duration: 3000,
           isClosable: true,
         });
       }
     } catch (error) {
-      console.error("Error al conectar wallet:", error);
+      console.error("Error connecting wallet:", error);
       toast({
-        title: "Error al conectar",
-        description: "No se pudo conectar con Core Wallet",
+        title: "Connection Error",
+        description: "Could not connect to Core Wallet",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -478,13 +478,13 @@ Remember to be direct but professional in your analysis.`,
     }
   };
 
-  // Función para desconectar wallet
+  // Function to disconnect wallet
   const disconnectWallet = () => {
     setIsWalletConnected(false);
     setWalletAddress("");
-    // No limpiamos el input al desconectar
+    // Don't clear input when disconnecting
     toast({
-      title: "Wallet desconectada",
+      title: "Wallet Disconnected",
       status: "info",
       duration: 3000,
       isClosable: true,
@@ -644,12 +644,12 @@ Remember to be direct but professional in your analysis.`,
         <AlertDialogOverlay>
           <AlertDialogContent bg="gray.800">
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Análisis Anterior Encontrado
+              Previous Analysis Found
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              Este contrato ya ha sido analizado anteriormente. ¿Deseas usar el
-              análisis anterior o realizar uno nuevo?
+              This contract has been analyzed before. Would you like to use the
+              previous analysis or perform a new one?
             </AlertDialogBody>
 
             <AlertDialogFooter>
@@ -657,7 +657,7 @@ Remember to be direct but professional in your analysis.`,
                 ref={cancelRef}
                 onClick={() => setShowConfirmDialog(false)}
               >
-                Cancelar
+                Cancel
               </Button>
               <Button
                 colorScheme="blue"
@@ -669,7 +669,7 @@ Remember to be direct but professional in your analysis.`,
                 }}
                 ml={3}
               >
-                Usar Anterior
+                Use Previous
               </Button>
               <Button
                 colorScheme="brand"
@@ -679,7 +679,7 @@ Remember to be direct but professional in your analysis.`,
                 }}
                 ml={3}
               >
-                Nuevo Análisis
+                New Analysis
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -1141,7 +1141,7 @@ Remember to be direct but professional in your analysis.`,
   );
 }
 
-// Añadir la declaración de tipos para window.avalanche
+// Add type declaration for window.avalanche
 declare global {
   interface Window {
     avalanche: {
