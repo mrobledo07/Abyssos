@@ -51,7 +51,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
-import { Avalanche } from "avalanche";
+import { analyzeContract } from "@abyssos/blockchain-sdk";
 
 interface AnalysisData {
   address: string;
@@ -77,7 +77,7 @@ interface AnalysisData {
 
 function Analysis() {
   const [input, setInput] = useState(
-    "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+    "0xde3A24028580884448a5397872046a019649b084"
   );
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<
@@ -112,34 +112,7 @@ function Analysis() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showClearAllDialog, setShowClearAllDialog] = useState(false);
   const [analysisToDelete, setAnalysisToDelete] = useState<number | null>(null);
-
-  const exampleAnalysis: AnalysisData = {
-    address: "0xabc123...def456",
-    score: 28,
-    risk_level: "high",
-    risk_tags: [
-      "new_wallet",
-      "can_mint_tokens",
-      "unverified_contract",
-      "multiple_deploys",
-      "unknown_creator",
-    ],
-    wallet_profile: {
-      wallet_age_days: 3,
-      tx_count: 74,
-      contract_deploys: 5,
-      token_mints: 2,
-      interacted_with_known_rug: true,
-    },
-    contract_profile: {
-      has_mint_function: true,
-      is_verified: false,
-      owner_controls_minting: true,
-      can_pause_contract: true,
-    },
-    social_sentiment: "negative",
-    timestamp: "2025-05-24T14:00:00Z",
-  };
+  const [error, setError] = useState<string | null>(null);
 
   const checkPreviousAnalysis = (address: string) => {
     // Primero verificar en el historial
@@ -193,75 +166,42 @@ function Analysis() {
     localStorage.setItem(`analysis_${address}`, JSON.stringify(analysis));
   };
 
-  const performAnalysis = async () => {
-    setIsLoading(true);
-    setIsTableModalOpen(true);
-    setChatMessages([]);
-    setChatInput("");
-
+  const performAnalysis = async (address: string) => {
     try {
-      // Simular tiempo de carga inicial
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      setIsLoading(true);
+      setError(null);
+      setIsTableModalOpen(true);
+      setAnalysisComplete(false);
 
-      // Llamada a la API
-      const response = await fetch(
-        `http://localhost:1234/trust-score?address=${input}`
-      );
-      const trustScoreData = await response.json();
+      // Perform real analysis using our SDK
+      const analysisData = await analyzeContract(address);
 
-      // Simular tiempo de carga entre llamadas
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Store the analysis
+      storeAnalysis(address, analysisData);
 
-      // Obtener los datos de dev1 y dev3
-      const dev1Response = await fetch("http://localhost:1234/dev1-data");
-      const dev1Data = await dev1Response.json();
-
-      // Simular tiempo de carga entre llamadas
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const dev3Response = await fetch("http://localhost:1234/dev3-data");
-      const dev3Data = await dev3Response.json();
-
-      // Simular tiempo de procesamiento final
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Combinar todos los datos
-      const combinedData: AnalysisData = {
-        address: input,
-        score: trustScoreData.score,
-        risk_level:
-          trustScoreData.score <= 33
-            ? "low"
-            : trustScoreData.score <= 66
-              ? "medium"
-              : "high",
-        risk_tags: generateRiskTags(trustScoreData.factors),
-        wallet_profile: {
-          wallet_age_days: dev1Data.ageInDays,
-          tx_count: Math.round(dev1Data.txVolume * 100),
-          contract_deploys: dev1Data.deployedContracts,
-          token_mints: dev1Data.tokenMinted || 0,
-          interacted_with_known_rug:
-            dev1Data.interactedWithKnownRugPools || false,
-        },
-        contract_profile: {
-          has_mint_function: dev1Data.canMintTokens || false,
-          is_verified: dev1Data.contractVerified || false,
-          owner_controls_minting: dev1Data.ownerControlsMinting || false,
-          can_pause_contract: dev1Data.ownerCanPauseContract || false,
-        },
-        social_sentiment: "neutral",
-        timestamp: new Date().toISOString(),
-      };
-
-      setCurrentAnalysis(combinedData);
+      // Update state
+      setCurrentAnalysis(analysisData);
       setAnalysisComplete(true);
-      storeAnalysis(input, combinedData);
+      toast({
+        title: "Análisis Completado",
+        description: "El análisis del contrato se ha completado con éxito.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
     } catch (error) {
-      console.error("Error during analysis:", error);
-      // En caso de error, usar datos de ejemplo
-      setCurrentAnalysis(exampleAnalysis);
-      setAnalysisComplete(true);
+      console.error("Error analyzing contract:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to analyze contract"
+      );
+      toast({
+        title: "Error en el Análisis",
+        description:
+          error instanceof Error ? error.message : "Failed to analyze contract",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -285,10 +225,9 @@ function Analysis() {
     const previousAnalysis = checkPreviousAnalysis(input);
 
     if (previousAnalysis) {
-      setCurrentAnalysis(previousAnalysis);
       setShowConfirmDialog(true);
     } else {
-      performAnalysis();
+      performAnalysis(input);
     }
   };
 
@@ -705,12 +644,12 @@ Remember to be direct but professional in your analysis.`,
         <AlertDialogOverlay>
           <AlertDialogContent bg="gray.800">
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Previous Analysis Found
+              Análisis Anterior Encontrado
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              This wallet has been analyzed before. Would you like to use the
-              previous analysis or perform a new one?
+              Este contrato ya ha sido analizado anteriormente. ¿Deseas usar el
+              análisis anterior o realizar uno nuevo?
             </AlertDialogBody>
 
             <AlertDialogFooter>
@@ -718,28 +657,29 @@ Remember to be direct but professional in your analysis.`,
                 ref={cancelRef}
                 onClick={() => setShowConfirmDialog(false)}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button
                 colorScheme="blue"
                 onClick={() => {
                   setShowConfirmDialog(false);
+                  setCurrentAnalysis(checkPreviousAnalysis(input));
                   setIsTableModalOpen(true);
                   setAnalysisComplete(true);
                 }}
                 ml={3}
               >
-                Use Previous
+                Usar Anterior
               </Button>
               <Button
                 colorScheme="brand"
                 onClick={() => {
                   setShowConfirmDialog(false);
-                  performAnalysis();
+                  performAnalysis(input);
                 }}
                 ml={3}
               >
-                New Analysis
+                Nuevo Análisis
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
