@@ -9,6 +9,52 @@ const avaCloudSDK = new AvaCloudSDK({
   network: "mainnet",
 });
 
+async function generateMockDataFromContract(
+  contractAddress: string,
+  sourceCode: string | null
+) {
+  if (!sourceCode) {
+    // If no source code, use random data as fallback
+    return generateMockData(contractAddress);
+  }
+
+  try {
+    const response = await fetch("https://llm.chutes.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer cpk_ce89ceb6867a481f8909e06e3ebf4a92.9cbd21fdce06559abc33312355e06bcd.y295y5uCV1OC4i3CGjjoiIk9Fllwc9Kj`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "deepseek-ai/DeepSeek-V3-0324",
+        messages: [
+          {
+            role: "system",
+            content: `Analyze the following smart contract code and generate data about its features. Respond ONLY with a JSON object containing the following properties:
+{
+  "canMintTokens": boolean, // If the contract can mint tokens
+  "ownerControlsMinting": boolean, // If the owner controls minting
+  "ownerCanPauseContract": boolean, // If the contract can be paused
+}
+
+Contract code:
+${sourceCode}`,
+          },
+        ],
+        temperature: 0.1,
+        max_tokens: 500,
+      }),
+    });
+
+    const data = await response.json();
+    const aiResponse = data.choices[0].message.content;
+    return JSON.parse(aiResponse);
+  } catch (error) {
+    console.error("Error generating mock data from contract:", error);
+    return generateMockData(contractAddress);
+  }
+}
+
 export async function analyzeContract(
   contractAddress: string
 ): Promise<AnalysisData> {
@@ -16,8 +62,14 @@ export async function analyzeContract(
     // Get real contract data
     const contractData = await getContractData(contractAddress);
 
-    // Get mock data for additional analysis
-    const mockData = generateMockData(contractAddress);
+    // Get contract source code
+    const sourceCode = await getContractSourceCode(contractAddress);
+
+    // Generate mock data based on contract code
+    const mockData = await generateMockDataFromContract(
+      contractAddress,
+      sourceCode
+    );
 
     // Combine real and mock data
     return combineAnalysisData(contractData, mockData);
@@ -167,4 +219,56 @@ function generateRiskTags(
   if (mockData.interactedWithKnownRugPools) tags.push("rug_pool_interaction");
 
   return tags;
+}
+
+export async function getContractSourceCode(
+  contractAddress: string
+): Promise<string | null> {
+  try {
+    console.log(`Fetching source code for contract: ${contractAddress}`);
+
+    const response = await fetch(
+      `https://api.snowtrace.io/api?module=contract&action=getsourcecode&address=${contractAddress}`
+    );
+
+    if (!response.ok) {
+      console.error(`HTTP error! status: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    console.log("Snowtrace API response:", data);
+
+    if (data.status === "0") {
+      console.error("Snowtrace API error:", data.message);
+      return null;
+    }
+
+    if (
+      !data.result ||
+      !Array.isArray(data.result) ||
+      data.result.length === 0
+    ) {
+      console.error("Invalid response format from Snowtrace API");
+      return null;
+    }
+
+    const contractData = data.result[0];
+    console.log("Contract data:", {
+      isVerified: contractData.CompilerVersion ? "Yes" : "No",
+      hasSourceCode: !!contractData.SourceCode,
+      compilerVersion: contractData.CompilerVersion,
+      contractName: contractData.ContractName,
+    });
+
+    if (!contractData.SourceCode) {
+      console.log("Contract is not verified or source code is not available");
+      return null;
+    }
+
+    return contractData.SourceCode;
+  } catch (error) {
+    console.error("Error getting contract source code:", error);
+    return null;
+  }
 }
